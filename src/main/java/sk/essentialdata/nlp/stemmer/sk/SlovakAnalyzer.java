@@ -6,14 +6,13 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.miscellaneous.SetKeywordMarkerFilter;
-import org.apache.lucene.analysis.standard.StandardFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
-import org.apache.lucene.analysis.util.CharArraySet;
-import org.apache.lucene.analysis.util.StopwordAnalyzerBase;
-import org.apache.lucene.analysis.util.WordlistLoader;
-import org.apache.lucene.util.IOUtils;
+import org.apache.lucene.analysis.CharArraySet;
+import org.apache.lucene.analysis.StopwordAnalyzerBase;
+import org.apache.lucene.analysis.WordlistLoader;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
@@ -45,8 +44,7 @@ public final class SlovakAnalyzer extends StopwordAnalyzerBase {
 
         static {
             try {
-                DEFAULT_SET = WordlistLoader.getWordSet(IOUtils.getDecodingReader(SlovakAnalyzer.class,
-                        DEFAULT_STOPWORD_FILE, StandardCharsets.UTF_8), "#");
+                DEFAULT_SET = WordlistLoader.getWordSet(new InputStreamReader(SlovakAnalyzer.class.getClassLoader().getResourceAsStream(DEFAULT_STOPWORD_FILE), StandardCharsets.UTF_8), "#");
             } catch (IOException ex) {
                 // default set should always be present as it is part of the
                 // distribution (JAR)
@@ -103,11 +101,11 @@ public final class SlovakAnalyzer extends StopwordAnalyzerBase {
     @Override
     protected TokenStreamComponents createComponents(String fieldName) {
         final Tokenizer source = new StandardTokenizer();
-        TokenStream result = new StandardFilter(source);
-        result = new LowerCaseFilter(result);
+        TokenStream result = new LowerCaseFilter(source);
         result = new StopFilter(result, stopwords);
         if (!this.stemExclusionTable.isEmpty())
             result = new SetKeywordMarkerFilter(result, stemExclusionTable);
+
         result = new SlovakStemFilter(result);
         return new TokenStreamComponents(source, result);
     }
